@@ -1,8 +1,9 @@
 // app/(tabs)/sessions/index.tsx
+import { Ionicons } from '@expo/vector-icons';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 
 import SessionListItem from '@/components/SessionListItem';
 import { api } from '@/lib/api'; // <- use your api.get()
@@ -67,45 +68,68 @@ export default function SessionsListScreen() {
     }
 
     return (
-        <FlatList
-            style={{ flex: 1, padding: 16, backgroundColor: '#0b0b0c' }}
-            contentContainerStyle={{ gap: 12, paddingBottom: 24 }}
-            data={items}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-                <SessionListItem
-                    onPress={() =>
-                        router.push(
-                            { pathname: '/(tabs)/sessions/[id]', params: { id: item.id } } as any
-                        )
-                    }
-                    label={item.label}
-                    dateISO={item.date}
-                    status={item.status}
-                    overallScore={item.overallScore ?? undefined}
-                    energyLevel={item.energyLevel ?? undefined}
-                    mood={item.mood ?? undefined}
-                />
-            )}
-            refreshControl={
-                <RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} tintColor="#fff" />
-            }
-            onEndReachedThreshold={0.4}
-            onEndReached={() => {
-                if (hasNextPage && !isFetchingNextPage) fetchNextPage();
-            }}
-            ListFooterComponent={
-                isFetchingNextPage ? (
-                    <View style={{ paddingVertical: 16 }}>
-                        <ActivityIndicator />
+        <View style={{ flex: 1 }}>
+            <FlatList
+                style={{ flex: 1, padding: 16, backgroundColor: '#0b0b0c' }}
+                contentContainerStyle={{ gap: 12, paddingBottom: 24 }}
+                data={items}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                    <SessionListItem
+                        onPress={() =>
+                            router.push(
+                                { pathname: '/(tabs)/sessions/[id]', params: { id: item.id } } as any
+                            )
+                        }
+                        label={item.label}
+                        dateISO={item.date}
+                        status={item.status}
+                        overallScore={item.overallScore ?? undefined}
+                        energyLevel={item.energyLevel ?? undefined}
+                        mood={item.mood ?? undefined}
+                    />
+                )}
+                refreshControl={
+                    <RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} tintColor="#fff" />
+                }
+                onEndReachedThreshold={0.4}
+                onEndReached={() => {
+                    if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+                }}
+                ListFooterComponent={
+                    isFetchingNextPage ? (
+                        <View style={{ paddingVertical: 16 }}>
+                            <ActivityIndicator />
+                        </View>
+                    ) : null
+                }
+                ListEmptyComponent={
+                    <View style={{ paddingTop: 64, alignItems: 'center' }}>
+                        <Text style={{ color: '#c7cad1' }}>No sessions yet.</Text>
                     </View>
-                ) : null
-            }
-            ListEmptyComponent={
-                <View style={{ paddingTop: 64, alignItems: 'center' }}>
-                    <Text style={{ color: '#c7cad1' }}>No sessions yet.</Text>
-                </View>
-            }
-        />
+                }
+            />
+
+            <Pressable
+                onPress={() => router.push('/create-session' as any)}
+                style={{
+                    position: 'absolute',
+                    right: 16,
+                    // bottom: 16 + insets.bottom,
+                    bottom: 90, // quick hack to sit above tab bar; replace w/ insets.bottom
+                    width: 56,
+                    height: 56,
+                    borderRadius: 28,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#fff',
+                    elevation: 6,
+                }}
+            >
+                <Ionicons name="add" size={24} color="#000" />
+            </Pressable>
+        </View>
+
+
     );
 }

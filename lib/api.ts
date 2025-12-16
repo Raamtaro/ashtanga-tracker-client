@@ -2,6 +2,14 @@ import { getToken } from './auth';
 
 const API_BASE = process.env.EXPO_PUBLIC_API_BASE!;
 
+type UnauthorizedHandler = (info: { status: 401; path: string; message?: string }) => void;
+
+let onUnauthorized: UnauthorizedHandler | null = null;
+
+export function setUnauthorizedHandler(fn: UnauthorizedHandler | null) {
+    onUnauthorized = fn;
+}
+
 function buildUrl(path: string, query?: Record<string, unknown>) {
     const cleanPath = path.startsWith('/') ? path : `${path}`;
     const url = new URL(API_BASE + cleanPath);
@@ -32,8 +40,6 @@ async function request<T>(
 ): Promise<T> {
     const token = await getToken();
     const url = buildUrl(path, query);
-    
-    console.log(url)
 
     const headers = new Headers(init.headers);
     if (!(init.body instanceof FormData)) {
@@ -51,12 +57,16 @@ async function request<T>(
         } catch {
             msg = (await res.text()) || msg;
         }
+
+        if (res.status === 401) {
+            onUnauthorized?.({ status: 401, path: url, message: msg });
+        }
+
         const e = new Error(msg) as Error & { status?: number };
         e.status = res.status;
         throw e;
     }
 
-    // ✅ parse once and return
     const json = (await res.json()) as T;
     return json;
 }
