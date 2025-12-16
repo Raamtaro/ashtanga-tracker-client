@@ -1,8 +1,10 @@
+import { CreatedSessionDTO, PoseDTO, PracticeType } from '@/types/sessions';
 import { getToken } from './auth';
 
 const API_BASE = process.env.EXPO_PUBLIC_API_BASE!;
 
 type UnauthorizedHandler = (info: { status: 401; path: string; message?: string }) => void;
+export type CustomGroup = 'PRIMARY' | 'INTERMEDIATE' | 'ADVANCED_A' | 'ADVANCED_B';
 
 let onUnauthorized: UnauthorizedHandler | null = null;
 
@@ -118,14 +120,27 @@ export async function getSessions(page = 1, limit = 20) {
     return res.json();
 }
 
-export async function createSession() {
-
+export async function createPresetSession(body: {
+  practiceType: Exclude<PracticeType, 'CUSTOM'>;
+  label?: string;
+  duration?: number;
+  // omit date for now (server defaults); you can add later as ISO string
+}) {
+  return api.post<{ session: CreatedSessionDTO }>('session/preset', body);
 }
 
-export async function editScoreCard(id: string) {
-
+export async function createCustomSession(body: {
+  practiceType: 'CUSTOM';
+  label?: string;
+  duration?: number;
+  sequenceSnippets: { group: CustomGroup; upToSlug: string }[];
+}) {
+  return api.post<{ session: CreatedSessionDTO }>('session/custom', body);
 }
 
-export async function deleteSession(id: string) {
-
+export async function getPickerPoses(groups: CustomGroup[]) {
+  return api.get<{ count: number; poses: PoseDTO[] }>(
+    '/pose/segment',
+    { segment: groups.join(',') } // e.g. PRIMARY,INTERMEDIATE,ADVANCED_A,ADVANCED_B
+  );
 }
