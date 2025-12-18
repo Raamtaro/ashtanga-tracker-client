@@ -1,7 +1,7 @@
 import { CreatedSessionDTO, PoseDTO, PracticeType } from '@/types/sessions';
 import { getToken } from './auth';
 
-const API_BASE = process.env.EXPO_PUBLIC_API_BASE!;
+const API_BASE = process.env.EXPO_PUBLIC_API_BASE!.replace(/\/+$/, ''); // strip trailing /
 
 type UnauthorizedHandler = (info: { status: 401; path: string; message?: string }) => void;
 export type CustomGroup = 'PRIMARY' | 'INTERMEDIATE' | 'ADVANCED_A' | 'ADVANCED_B';
@@ -13,7 +13,7 @@ export function setUnauthorizedHandler(fn: UnauthorizedHandler | null) {
 }
 
 function buildUrl(path: string, query?: Record<string, unknown>) {
-    const cleanPath = path.startsWith('/') ? path : `${path}`;
+    const cleanPath = path.startsWith('/') ? path : `/${path}`; // ensure leading /
     const url = new URL(API_BASE + cleanPath);
     if (query) {
         Object.entries(query).forEach(([k, v]) => {
@@ -95,7 +95,7 @@ export async function authFetch(path: string, init: RequestInit = {}) {
 
 export async function login(email: string, password: string) {
     // Adjust to your actual /auth/login response { token }
-    const res = await fetch(`${API_BASE}auth/login`, {
+    const res = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -105,7 +105,7 @@ export async function login(email: string, password: string) {
 }
 
 export async function registerUser(name: string, email: string, password: string) {
-    const res = await fetch(`${API_BASE}auth/signup`, {
+    const res = await fetch(`${API_BASE}/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password }),
@@ -121,26 +121,30 @@ export async function getSessions(page = 1, limit = 20) {
 }
 
 export async function createPresetSession(body: {
-  practiceType: Exclude<PracticeType, 'CUSTOM'>;
-  label?: string;
-  duration?: number;
-  // omit date for now (server defaults); you can add later as ISO string
+    practiceType: Exclude<PracticeType, 'CUSTOM'>;
+    label?: string;
+    duration?: number;
+    // omit date for now (server defaults); you can add later as ISO string
 }) {
-  return api.post<{ session: CreatedSessionDTO }>('session/preset', body);
+    return api.post<{ session: CreatedSessionDTO }>('session/preset', body);
 }
 
 export async function createCustomSession(body: {
-  practiceType: 'CUSTOM';
-  label?: string;
-  duration?: number;
-  sequenceSnippets: { group: CustomGroup; upToSlug: string }[];
+    practiceType: 'CUSTOM';
+    label?: string;
+    duration?: number;
+    sequenceSnippets: { group: CustomGroup; upToSlug: string }[];
 }) {
-  return api.post<{ session: CreatedSessionDTO }>('session/custom', body);
+    return api.post<{ session: CreatedSessionDTO }>('session/custom', body);
 }
 
 export async function getPickerPoses(groups: CustomGroup[]) {
-  return api.get<{ count: number; poses: PoseDTO[] }>(
-    '/pose/segment',
-    { segment: groups.join(',') } // e.g. PRIMARY,INTERMEDIATE,ADVANCED_A,ADVANCED_B
-  );
+
+    const result = await api.get<{ count: number; poses: PoseDTO[] }>(
+        'pose/segment',
+        { segment: groups.join(',') } // e.g. PRIMARY,INTERMEDIATE,ADVANCED_A,ADVANCED_B
+    );
+    console.log('This function is running')
+    console.log(result);
+    return result;
 }

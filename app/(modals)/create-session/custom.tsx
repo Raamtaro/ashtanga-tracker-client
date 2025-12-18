@@ -1,14 +1,15 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react'; //useEffect for console.log debugging
 import {
     ActivityIndicator,
     FlatList,
     Modal,
     Pressable,
+    ScrollView,
     Text,
     TextInput,
-    View,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -34,9 +35,13 @@ export default function CreateCustom() {
     const [pickerIndex, setPickerIndex] = useState<number | null>(null);
     const [search, setSearch] = useState('');
 
-    const { data, isLoading } = useQuery({
+    const { data, isLoading, error, status } = useQuery({
         queryKey: ['poses', 'picker'],
-        queryFn: () => getPickerPoses(['PRIMARY', 'INTERMEDIATE', 'ADVANCED_A', 'ADVANCED_B']),
+        queryFn: () => {
+            console.log("I am running") //this is showing...
+            return getPickerPoses(['PRIMARY', 'INTERMEDIATE', 'ADVANCED_A', 'ADVANCED_B'])
+        },
+        // retry: false, //debugging
     });
 
     const posesByGroup = useMemo(() => {
@@ -90,88 +95,92 @@ export default function CreateCustom() {
 
     const canCreate = snippets.every((s) => s.upToSlug.trim().length > 0);
 
+    // useEffect(() => {
+    //     console.log('Pose picker query status:', status);
+    //     if (error) {
+    //         console.log('Error fetching poses:', error);
+    //     }
+    //     console.log('Current data:', data);
+    // }, [data, error, status])
+
     return (
         <View style={{ flex: 1, padding: 16, gap: 14 }}>
-            <Text style={{ fontSize: 16, fontWeight: '600' }}>Sequence snippets</Text>
-
-            {snippets.map((s, idx) => (
-                <View key={idx} style={{ borderWidth: 1, borderRadius: 12, padding: 12, gap: 10 }}>
-                    <Text style={{ fontWeight: '600' }}>Snippet {idx + 1}</Text>
-
-                    <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-                        {GROUPS.map((g) => (
-                            <Pressable
-                                key={g.value}
-                                onPress={() => {
-                                    const copy = [...snippets];
-                                    copy[idx] = { ...copy[idx], group: g.value, upToSlug: '' };
-                                    setSnippets(copy);
-                                }}
-                                style={{
-                                    paddingVertical: 8,
-                                    paddingHorizontal: 10,
-                                    borderRadius: 10,
-                                    borderWidth: 1,
-                                    opacity: s.group === g.value ? 1 : 0.5,
-                                }}
-                            >
-                                <Text>{g.label}</Text>
-                            </Pressable>
-                        ))}
-                    </View>
-
-                    <Pressable
-                        onPress={() => openPicker(idx)}
-                        style={{ padding: 12, borderRadius: 10, borderWidth: 1 }}
-                    >
-                        <Text style={{ opacity: s.upToSlug ? 1 : 0.6 }}>
-                            {s.upToSlug ? `Up to: ${s.upToSlug}` : 'Pick “up to” pose'}
-                        </Text>
-                    </Pressable>
-
-                    {snippets.length > 1 && (
+            <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 48, gap: 12 }}
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="on-drag">
+                <Text style={{ fontSize: 16, fontWeight: '600' }}>Sequence snippets</Text>
+                {snippets.map((s, idx) => (
+                    <View key={idx} style={{ borderWidth: 1, borderRadius: 12, padding: 12, gap: 10 }}>
+                        <Text style={{ fontWeight: '600' }}>Snippet {idx + 1}</Text>
+                        <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+                            {GROUPS.map((g) => (
+                                <Pressable
+                                    key={g.value}
+                                    onPress={() => {
+                                        const copy = [...snippets];
+                                        copy[idx] = { ...copy[idx], group: g.value, upToSlug: '' };
+                                        setSnippets(copy);
+                                    }}
+                                    style={{
+                                        paddingVertical: 8,
+                                        paddingHorizontal: 10,
+                                        borderRadius: 10,
+                                        borderWidth: 1,
+                                        opacity: s.group === g.value ? 1 : 0.5,
+                                    }}
+                                >
+                                    <Text>{g.label}</Text>
+                                </Pressable>
+                            ))}
+                        </View>
                         <Pressable
-                            onPress={() => setSnippets(snippets.filter((_, i) => i !== idx))}
-                            style={{ padding: 10 }}
+                            onPress={() => openPicker(idx)}
+                            style={{ padding: 12, borderRadius: 10, borderWidth: 1 }}
                         >
-                            <Text style={{ color: 'tomato' }}>Remove snippet</Text>
+                            <Text style={{ opacity: s.upToSlug ? 1 : 0.6 }}>
+                                {s.upToSlug ? `Up to: ${s.upToSlug}` : 'Pick “up to” pose'}
+                            </Text>
                         </Pressable>
-                    )}
-                </View>
-            ))}
-
-            <Pressable
-                onPress={() => setSnippets([...snippets, { group: 'PRIMARY', upToSlug: '' }])}
-                style={{ padding: 12, borderRadius: 12, borderWidth: 1, alignItems: 'center' }}
-            >
-                <Text>Add snippet</Text>
-            </Pressable>
-
-            <Text style={{ marginTop: 8 }}>Label (optional)</Text>
-            <TextInput value={label} onChangeText={setLabel} style={{ borderWidth: 1, borderRadius: 10, padding: 12 }} />
-
-            <Text>Duration minutes (optional)</Text>
-            <TextInput
-                value={duration}
-                onChangeText={setDuration}
-                keyboardType="numeric"
-                style={{ borderWidth: 1, borderRadius: 10, padding: 12 }}
-            />
-
-            <Pressable
-                disabled={!canCreate || mut.isPending}
-                onPress={() => mut.mutate()}
-                style={{
-                    marginTop: 14,
-                    padding: 14,
-                    borderRadius: 12,
-                    borderWidth: 1,
-                    alignItems: 'center',
-                    opacity: !canCreate ? 0.5 : 1,
-                }}
-            >
-                {mut.isPending ? <ActivityIndicator /> : <Text style={{ fontWeight: '600' }}>Create</Text>}
-            </Pressable>
+                        {snippets.length > 1 && (
+                            <Pressable
+                                onPress={() => setSnippets(snippets.filter((_, i) => i !== idx))}
+                                style={{ padding: 10 }}
+                            >
+                                <Text style={{ color: 'tomato' }}>Remove snippet</Text>
+                            </Pressable>
+                        )}
+                    </View>
+                ))}
+                <Pressable
+                    onPress={() => setSnippets([...snippets, { group: 'PRIMARY', upToSlug: '' }])}
+                    style={{ padding: 12, borderRadius: 12, borderWidth: 1, alignItems: 'center' }}
+                >
+                    <Text>Add snippet</Text>
+                </Pressable>
+                <Text style={{ marginTop: 8 }}>Label (optional)</Text>
+                <TextInput value={label} onChangeText={setLabel} style={{ borderWidth: 1, borderRadius: 10, padding: 12 }} />
+                <Text>Duration minutes (optional)</Text>
+                <TextInput
+                    value={duration}
+                    onChangeText={setDuration}
+                    keyboardType="numeric"
+                    style={{ borderWidth: 1, borderRadius: 10, padding: 12 }}
+                />
+                <Pressable
+                    disabled={!canCreate || mut.isPending}
+                    onPress={() => mut.mutate()}
+                    style={{
+                        marginTop: 14,
+                        padding: 14,
+                        borderRadius: 12,
+                        borderWidth: 1,
+                        alignItems: 'center',
+                        opacity: !canCreate ? 0.5 : 1,
+                    }}
+                >
+                    {mut.isPending ? <ActivityIndicator /> : <Text style={{ fontWeight: '600' }}>Create</Text>}
+                </Pressable>
+            </ScrollView>
 
             {!!mut.error && <Text style={{ color: 'tomato' }}>{String((mut.error as Error).message)}</Text>}
 
