@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { createPresetSession } from '@/lib/api';
 import type { PracticeType } from '@/types/sessions';
@@ -38,7 +38,7 @@ export default function CreatePreset() {
     });
 
     return (
-        <View style={{ flex: 1, padding: 16, gap: 14 }}>
+        <ScrollView style={{ flex: 1}} contentContainerStyle={{ padding: 16, paddingBottom: 48, gap: 12 }}>
             <Text style={{ fontSize: 16, fontWeight: '600' }}>Practice Type</Text>
 
             <View style={{ gap: 8 }}>
@@ -86,6 +86,6 @@ export default function CreatePreset() {
             {!!mut.error && (
                 <Text style={{ marginTop: 10, color: 'tomato' }}>{String((mut.error as Error).message)}</Text>
             )}
-        </View>
+        </ScrollView>
     );
 }
