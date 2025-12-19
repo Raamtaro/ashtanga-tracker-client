@@ -83,13 +83,22 @@ export default function CreateCustom() {
                 sequenceSnippets: snippets.filter((s) => s.upToSlug.trim().length > 0),
             }),
         onSuccess: async (resp) => {
-            router.dismiss();
+            const id = resp.session.id;
 
-            // then push the detail screen so you get a back button
-            router.push({
-                pathname: '/(tabs)/sessions/[id]',
-                params: { id: resp.session.id },
-            } as any);
+            // close the create-session modal stack completely
+            router.dismissAll();
+
+            // wait a tick so the dismissal finishes, then go to the tab screen
+            requestAnimationFrame(() => {
+                router.replace('/(tabs)/sessions'); // now Sessions index is the stack root
+
+                requestAnimationFrame(() => {
+                    router.push({
+                        pathname: '/(tabs)/sessions/[id]',
+                        params: { id },
+                    } as any);
+                });
+            });
         },
     });
 

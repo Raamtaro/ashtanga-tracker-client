@@ -27,18 +27,27 @@ export default function CreatePreset() {
                 duration: duration ? Number(duration) : undefined,
             }),
         onSuccess: async (resp) => {
-            router.dismiss();
+            const id = resp.session.id;
 
-            // then push the detail screen so you get a back button
-            router.push({
-                pathname: '/(tabs)/sessions/[id]',
-                params: { id: resp.session.id },
-            } as any);
+            // close the create-session modal stack completely
+            router.dismissAll();
+
+            // wait a tick so the dismissal finishes, then go to the tab screen
+            requestAnimationFrame(() => {
+                router.replace('/(tabs)/sessions'); // now Sessions index is the stack root
+
+                requestAnimationFrame(() => {
+                    router.push({
+                        pathname: '/(tabs)/sessions/[id]',
+                        params: { id },
+                    } as any);
+                });
+            });
         },
     });
 
     return (
-        <ScrollView style={{ flex: 1}} contentContainerStyle={{ padding: 16, paddingBottom: 48, gap: 12 }}>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 48, gap: 12 }}>
             <Text style={{ fontSize: 16, fontWeight: '600' }}>Practice Type</Text>
 
             <View style={{ gap: 8 }}>
