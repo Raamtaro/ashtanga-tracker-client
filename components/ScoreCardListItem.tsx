@@ -18,7 +18,7 @@ export default function ScoreCardListItem({ onPress, poseName, overallScore, sid
                 {/* If there is a side, then show it */}
                 {side !== "NA" && (
                     <Text style={{ color: '#c7cad1', fontSize: 14 }}>
-                        {side === "LEFT" ? "Left Side" : "Right Side"}
+                        {side === "LEFT" ? "L" : "R"}
                     </Text>
                 )}
             </View>
