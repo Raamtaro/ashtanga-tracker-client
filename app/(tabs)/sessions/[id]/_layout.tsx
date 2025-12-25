@@ -7,7 +7,7 @@ export default function SessionLayout() {
             <Stack.Screen
                 name="index"
             />
-            {/* <Stack.Screen name="[id]" options={{ title: 'Session' }} /> */}
+            <Stack.Screen name="edit/[cardId]" options={{ title: 'Edit' }} />
         </Stack>
     );
 }
