@@ -6,6 +6,33 @@ const API_BASE = process.env.EXPO_PUBLIC_API_BASE!.replace(/\/+$/, ''); // strip
 type UnauthorizedHandler = (info: { status: 401; path: string; message?: string }) => void;
 export type CustomGroup = 'PRIMARY' | 'INTERMEDIATE' | 'ADVANCED_A' | 'ADVANCED_B';
 
+export type AllowedMetric =
+    | 'ease'
+    | 'comfort'
+    | 'stability'
+    | 'pain'
+    | 'breath'
+    | 'focus'
+    | 'overallScore';
+
+export type TrendPointDTO = {
+    scoreCardId: string;
+    sessionDate: string; // ISO
+    createdAt: string; // ISO
+    side: string | null;
+    segment: string | null;
+    orderInSession: number;
+    skipped: boolean;
+    values: Record<string, number | null>;
+};
+
+export type PoseTrendResponseDTO = {
+    pose: { id: string; slug: string; sanskritName: string; isTwoSided: boolean; englishName: string | null };
+    metrics: AllowedMetric[];
+    window: { from?: string; to?: string };
+    points: TrendPointDTO[];
+};
+
 let onUnauthorized: UnauthorizedHandler | null = null;
 
 export function setUnauthorizedHandler(fn: UnauthorizedHandler | null) {
@@ -147,4 +174,39 @@ export async function getPickerPoses(groups: CustomGroup[]) {
     console.log('This function is running')
     console.log(result);
     return result;
+}
+
+export type TrendSide = 'LEFT' | 'RIGHT' | 'BOTH';
+export type TrendWindow = number | 'all';
+
+export async function getPoseTrend(
+    poseId: string,
+    opts: {
+        fields: AllowedMetric | AllowedMetric[];
+        days?: TrendWindow;
+        side?: TrendSide;              // omit when pose is single-sided
+        includeSkipped?: boolean;
+        from?: Date | string;
+        to?: Date | string;
+    }
+) {
+    const params = new URLSearchParams();
+
+    const fields = Array.isArray(opts.fields) ? opts.fields.join(',') : opts.fields;
+    params.set('fields', fields);
+
+    if (opts.days !== undefined) params.set('days', String(opts.days));
+    if (opts.side) params.set('side', opts.side);
+    if (opts.includeSkipped) params.set('includeSkipped', 'true');
+
+    if (opts.from) params.set('from', typeof opts.from === 'string' ? opts.from : opts.from.toISOString());
+    if (opts.to) params.set('to', typeof opts.to === 'string' ? opts.to : opts.to.toISOString());
+
+    const qs = params.toString();
+    const path = `pose/${poseId}/trend${qs ? `?${qs}` : ''}`;
+
+    // TEMP: prove window is being sent
+    console.log('[getPoseTrend]', path);
+
+    return api.get<PoseTrendResponseDTO>(path);
 }

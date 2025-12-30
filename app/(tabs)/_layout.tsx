@@ -7,9 +7,13 @@ export default function TabsLayout() {
                 name="sessions"
                 options={{ title: 'Sessions', tabBarLabel: 'Sessions', }}
             />
-            <Tabs.Screen
+            {/* <Tabs.Screen
                 name="data"
                 options={{ title: 'Data', tabBarLabel: 'Data' }}
+            /> */}
+            <Tabs.Screen
+                name="dataV2"
+                options={{ title: 'Data V2', tabBarLabel: 'Data' }}
             />
             <Tabs.Screen
                 name="account"
