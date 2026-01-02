@@ -50,7 +50,10 @@ export default function ScoreCardEditScreen() {
     const sessionQ = useQuery({
         queryKey: ['session', id],
         enabled: !!id,
-        queryFn: () => api.get<{ session: SessionDetailDTO }>(`session/${id}`),
+        queryFn: async (): Promise<SessionDetailDTO> => {
+            const result = await api.get<{ session: SessionDetailDTO }>(`session/${id}`);
+            return result.session;
+        },
     });
 
     const cardQ = useQuery({
@@ -59,7 +62,7 @@ export default function ScoreCardEditScreen() {
         queryFn: () => api.get<{ scoreCard: ScoreCardDTO }>(`score-card/${cardId}`),
     });
 
-    const session = sessionQ.data?.session;
+    const session = sessionQ.data;
     const scoreCard = cardQ.data?.scoreCard;
 
     const meta = useMemo(() => session?.scoreCards.find((c) => c.id === cardId) ?? null, [session, cardId]);
@@ -92,10 +95,22 @@ export default function ScoreCardEditScreen() {
 
     const mut = useMutation({
         mutationFn: (payload: UpdateScoreCardInput) =>
-            api.patch<{ scoreCard: ScoreCardDTO }>(`/score-card/${cardId}`, payload),
+            api.patch<{ scoreCard: ScoreCardDTO }>(`score-card/${cardId}`, payload),
         onSuccess: (data) => {
-            qc.setQueryData(['scoreCard', cardId], data);
-        }
+            qc.setQueryData(['scoreCard', cardId], (old: any) => {
+                const oldCard = old?.scoreCard;
+                const newCard = data.scoreCard;
+
+                return {
+                    scoreCard: {
+                        ...oldCard,
+                        ...newCard,
+                        // preserve nested relations if PATCH doesn't return them
+                        pose: oldCard?.pose ?? newCard.pose,
+                    },
+                };
+            });
+        },
     });
 
     const save = (payload: UpdateScoreCardInput) => mut.mutate(payload);
@@ -103,6 +118,10 @@ export default function ScoreCardEditScreen() {
     const setMetric = (k: string, v: number | null) => setMetrics((m) => ({ ...m, [k]: v }));
 
     const disabled = skipped;
+
+    useEffect(() => {
+        console.log('ScoreCard and Session loaded', { scoreCard, session });
+    }, [cardQ, sessionQ])
 
     useEffect(() => {
         console.log('Error in sessionQ or cardQ', { sessionError: sessionQ.error, cardError: cardQ.error });
@@ -123,6 +142,8 @@ export default function ScoreCardEditScreen() {
             </View>
         );
     }
+
+    //
 
     return (
         <View style={{ flex: 1 }}>

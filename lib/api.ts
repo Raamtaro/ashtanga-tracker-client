@@ -206,7 +206,7 @@ export async function getPoseTrend(
     const path = `pose/${poseId}/trend${qs ? `?${qs}` : ''}`;
 
     // TEMP: prove window is being sent
-    console.log('[getPoseTrend]', path);
+    // console.log('[getPoseTrend]', path);
 
     return api.get<PoseTrendResponseDTO>(path);
 }

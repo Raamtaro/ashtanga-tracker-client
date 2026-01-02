@@ -8,4 +8,5 @@ export type ScoreCardListItemDTO = {
     side: "LEFT" | "RIGHT" | "NA";
     overallScore: number | null;
     pose: PosePreviewDTO;
+    isComplete: boolean;
 }
