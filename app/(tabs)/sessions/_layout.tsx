@@ -11,7 +11,7 @@ export default function SessionsLayout() {
         // headerBackTitleVisible: false,
       }}>
       <Stack.Screen name="index" options={{ title: "All Sessions"}}/>
-      <Stack.Screen name="[id]" options={{ title: 'Session' }} />
+      <Stack.Screen name="[id]" options={{ title: 'Session', headerShown: false }} />
     </Stack>
   );
 }

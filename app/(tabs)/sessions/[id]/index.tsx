@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, Pressable, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type SessionDetailDTO = {
     id: string;
@@ -116,6 +117,13 @@ export default function SessionDetailScreen() {
     const [toast, setToast] = useState<{ msg: string; action?: () => void; actionLabel?: string } | null>(null);
 
     console.log(id)
+
+    const goBack = () => {
+        // go back if possible, otherwise fallback
+        // @ts-ignore
+        if (navigation.canGoBack?.()) navigation.goBack();
+        else router.replace('/(tabs)/sessions');
+    };
 
     const publishMut = useMutation({
         mutationFn: async () => {
@@ -241,13 +249,27 @@ export default function SessionDetailScreen() {
     }
 
     return (
-        <View style={{ flex: 1, backgroundColor: '#0b0b0c' }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#0b0b0c' }} edges={['top']}>
+            {/* Top row */}
+            <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8 }}>
+                <Pressable
+                    onPress={goBack}
+                    style={{
+                        alignSelf: 'flex-start',
+                        paddingVertical: 8,
+                        paddingHorizontal: 12,
+                        borderRadius: 999,
+                        backgroundColor: '#1c1f25',
+                    }}
+                >
+                    <Text style={{ color: 'white', fontWeight: '800' }}>{'← All Sessions'}</Text>
+                </Pressable>
+            </View>
             <View style={{ padding: 16, paddingBottom: 8 }}>
                 <Text style={{ color: 'white', fontSize: 18, fontWeight: '800' }}>Session</Text>
                 <Text style={{ color: '#9aa0aa', marginTop: 4 }}>
                     {new Date(session.date).toLocaleString()} • {session.status}
                 </Text>
-
                 <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
                     <ActionBtn label="Edit" onPress={onPressEdit} disabled={isPublished} />
                     <ActionBtn
@@ -284,10 +306,10 @@ export default function SessionDetailScreen() {
                 onClose={() => setToast(null)}
             />
             {/* {publishMut.error ? (
-                <Text style={{ color: 'tomato', padding: 16 }}>
-                    {String((publishMut.error as Error).message)}
-                </Text>
-            ) : null} */}
-        </View>
+                    <Text style={{ color: 'tomato', padding: 16 }}>
+                        {String((publishMut.error as Error).message)}
+                    </Text>
+                ) : null} */}
+        </SafeAreaView>
     );
 }
