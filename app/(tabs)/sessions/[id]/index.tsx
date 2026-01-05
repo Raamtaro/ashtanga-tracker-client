@@ -126,23 +126,28 @@ export default function SessionDetailScreen() {
             qc.invalidateQueries({ queryKey: ['sessions'] }); // if you have a sessions list tab
         },
         onError: (err: any) => {
-            const status = err?.status ?? err?.response?.status;
-            const data = err?.data ?? err?.response?.data ?? err?.body;
+            const status = err?.status;
+            const data = err?.data;
+
+            console.log('publish error', err.status, err.message, err.data);
 
             if (status === 409 && data?.scoreCardId) {
-                const label = `${data.pose?.sanskritName ?? 'Pose'}${data.side && data.side !== 'NA' ? ` • ${data.side}` : ''}`;
-                const missing = Array.isArray(data.missing) ? data.missing.join(', ') : 'required fields';
+                const label =
+                    `${data.pose?.sanskritName ?? 'Pose'}` +
+                    (data.side && data.side !== 'NA' ? ` • ${data.side}` : '');
+
+                const missing = Array.isArray(data.missing) ? data.missing.join(', ') : '';
 
                 setToast({
-                    msg: `Can’t publish. Incomplete: ${label} (missing: ${missing})`,
+                    msg: `${data.message} ${label}${missing ? ` (missing: ${missing})` : ''}`,
                     actionLabel: 'Fix',
                     action: () => goEditCard(data.scoreCardId),
                 });
                 return;
             }
 
-            setToast({ msg: 'Publish failed. Try again.' });
-        },
+            setToast({ msg: `${status ?? ''} ${err?.message ?? 'Error'}`.trim() });
+        }
     });
 
     const sessionQ = useQuery({
@@ -259,12 +264,6 @@ export default function SessionDetailScreen() {
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
                     <ScoreCardListItem
-                        // onPress={() =>
-                        //     router.push({
-                        //         pathname: '/(tabs)/sessions/[id]/edit/[cardId]',
-                        //         params: { id, cardId: item.id },
-                        //     } as any)
-                        // }
                         onPress={() => onPressCard(item.id)}
                         poseName={item.pose.sanskritName}
                         side={item.side}

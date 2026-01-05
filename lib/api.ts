@@ -33,6 +33,12 @@ export type PoseTrendResponseDTO = {
     points: TrendPointDTO[];
 };
 
+export type ApiError<T = any> = Error & {
+    status: number;
+    path: string;
+    data?: T;
+};
+
 let onUnauthorized: UnauthorizedHandler | null = null;
 
 export function setUnauthorizedHandler(fn: UnauthorizedHandler | null) {
@@ -78,26 +84,28 @@ async function request<T>(
 
     const res = await fetch(url, { ...init, headers, credentials: 'omit' });
 
+    // ✅ Parse body ONCE, for both success + error cases
+    const data = await parseJson<any>(res);
+
     if (!res.ok) {
-        let msg = `HTTP ${res.status}`;
-        try {
-            const errJson = await res.clone().json();
-            msg = errJson?.error || errJson?.message || msg;
-        } catch {
-            msg = (await res.text()) || msg;
-        }
+        const msg =
+            data?.error ||
+            data?.message ||
+            (typeof data?.raw === 'string' ? data.raw : null) ||
+            `HTTP ${res.status}`;
 
         if (res.status === 401) {
             onUnauthorized?.({ status: 401, path: url, message: msg });
         }
 
-        const e = new Error(msg) as Error & { status?: number };
+        const e = new Error(msg) as ApiError;
         e.status = res.status;
+        e.path = url;
+        e.data = data;
         throw e;
     }
 
-    const json = (await res.json()) as T;
-    return json;
+    return data as T;
 }
 
 /** Public helpers */
