@@ -1,5 +1,5 @@
 import Card from '@/components/ui/Card';
-import { getPickerPoses, getPoseTrend, type AllowedMetric, type PoseTrendResponseDTO } from '@/lib/api';
+import { getDataPickerPoses, getPoseTrend, type AllowedMetric, type PoseTrendResponseDTO } from '@/lib/api';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-type CustomGroup = 'PRIMARY' | 'INTERMEDIATE' | 'ADVANCED_A' | 'ADVANCED_B';
+type CustomGroup = 'SUN_SALUTATIONS' | 'STANDING' | 'PRIMARY' | 'INTERMEDIATE' | 'ADVANCED_A' | 'ADVANCED_B' | 'BACKBENDING' | 'FINISHING';
 type TrendSide = 'BOTH' | 'LEFT' | 'RIGHT';
 type PosePickerItem = {
     id: string;
@@ -25,7 +25,7 @@ type PosePickerItem = {
     isTwoSided: boolean;
 }
 
-const GROUPS_FOR_PICKER: CustomGroup[] = ['PRIMARY', 'INTERMEDIATE', 'ADVANCED_A', 'ADVANCED_B'];
+const GROUPS_FOR_PICKER: CustomGroup[] = ['SUN_SALUTATIONS', 'STANDING', 'PRIMARY', 'INTERMEDIATE', 'ADVANCED_A', 'ADVANCED_B', 'BACKBENDING', 'FINISHING'];
 
 
 const METRICS: AllowedMetric[] = [
@@ -243,7 +243,7 @@ export default function DataV2Screen() {
     const posesQ = useQuery({
         queryKey: ['poses', 'trendPicker'],
         queryFn: async () => {
-            const res = await getPickerPoses(GROUPS_FOR_PICKER);
+            const res = await getDataPickerPoses(GROUPS_FOR_PICKER);
             return res;
         },
     });

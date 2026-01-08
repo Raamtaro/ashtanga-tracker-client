@@ -1,6 +1,7 @@
+import Field from '@/components/Field';
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useAuth } from '../../providers/AuthProvider';
 
 export default function Login() {
@@ -27,10 +28,24 @@ export default function Login() {
         <View style={{ flex: 1, padding: 20, gap: 12, justifyContent: 'center' }}>
             <Text style={{ fontSize: 28, fontWeight: '700' }}>Welcome back</Text>
             {err ? <Text style={{ color: 'red' }}>{err}</Text> : null}
-            <TextInput placeholder="Email" autoCapitalize="none" keyboardType="email-address"
-                onChangeText={setEmail} style={{ borderWidth: 1, padding: 12, borderRadius: 8 }} />
-            <TextInput placeholder="Password" secureTextEntry onChangeText={setPassword}
-                style={{ borderWidth: 1, padding: 12, borderRadius: 8 }} />
+            <Field
+                label="Email"
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                textContentType="emailAddress"
+                autoComplete="email"
+            />
+
+            <Field
+                label="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                textContentType="password"
+                autoComplete="password"
+            />
             <Pressable disabled={busy} onPress={onSubmit}
                 style={{ backgroundColor: '#111', padding: 14, borderRadius: 10 }}>
                 <Text style={{ color: '#fff', textAlign: 'center', fontWeight: '600' }}>{busy ? 'Signing in…' : 'Sign in'}</Text>

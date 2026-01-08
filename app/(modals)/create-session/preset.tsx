@@ -1,3 +1,4 @@
+import DateField from '@/components/DateField';
 import { useMutation } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -18,11 +19,13 @@ export default function CreatePreset() {
     const [practiceType, setPracticeType] = useState(PRESETS[0].value);
     const [label, setLabel] = useState('');
     const [duration, setDuration] = useState(''); // minutes
+    const [date, setDate] = useState(() => new Date());
 
     const mut = useMutation({
         mutationFn: () =>
             createPresetSession({
                 practiceType,
+                date: date.toISOString(),
                 label: label.trim() || undefined,
                 duration: duration ? Number(duration) : undefined,
             }),
@@ -66,7 +69,7 @@ export default function CreatePreset() {
                     </Pressable>
                 ))}
             </View>
-
+            <DateField label="Session date" value={date} onChange={setDate} />
             <Text style={{ marginTop: 12 }}>Label (optional)</Text>
             <TextInput
                 value={label}

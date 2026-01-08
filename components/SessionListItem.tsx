@@ -25,11 +25,13 @@ export default function SessionListItem({
 
     return (
         <Card onPress={onPress} style={{ gap: 6 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+                <Text numberOfLines={2}
+                    ellipsizeMode="tail"
+                    style={{ color: 'white', flex: 1, minWidth: 0, fontSize: 16, fontWeight: '600' }}>
                     {label || 'Practice Session'}
                 </Text>
-                <Text style={{ color: '#9aa0a6', fontSize: 12 }}>{status}</Text>
+                <Text style={{ color: '#9aa0a6', fontSize: 12, marginLeft: 12, flexShrink: 0, position: 'absolute', right: 0 }}>{status}</Text>
             </View>
 
             <Text style={{ color: '#c7cad1' }}>{dateStr}</Text>

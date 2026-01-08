@@ -1,6 +1,7 @@
+import Field from '@/components/Field';
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { registerUser } from '../../lib/api';
 import { useAuth } from '../../providers/AuthProvider';
 
@@ -12,6 +13,10 @@ export default function Register() {
     const [password, setPassword] = useState('');
     const [err, setErr] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
+    const [confirmPassword, setConfirmPassword] = useState('');
+
+    const pwMismatch = password.length > 0 && confirmPassword.length > 0 && password !== confirmPassword;
+    const canSubmit = !busy && name.trim() && email.trim() && password.length >= 8 && !pwMismatch;
 
     const onSubmit = async () => {
         try {
@@ -31,13 +36,13 @@ export default function Register() {
         <View style={{ flex: 1, padding: 20, gap: 12, justifyContent: 'center' }}>
             <Text style={{ fontSize: 28, fontWeight: '700' }}>Create account</Text>
             {err ? <Text style={{ color: 'red' }}>{err}</Text> : null}
-            <TextInput placeholder="Name" onChangeText={setName} style={{ borderWidth: 1, padding: 12, borderRadius: 8 }} />
-            <TextInput placeholder="Email" autoCapitalize="none" keyboardType="email-address"
-                onChangeText={setEmail} style={{ borderWidth: 1, padding: 12, borderRadius: 8 }} />
-            <TextInput placeholder="Password" secureTextEntry onChangeText={setPassword}
-                style={{ borderWidth: 1, padding: 12, borderRadius: 8 }} />
-            <Pressable disabled={busy} onPress={onSubmit}
-                style={{ backgroundColor: '#111', padding: 14, borderRadius: 10 }}>
+            <Field label="Name" value={name} onChangeText={setName} />
+            <Field label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" textContentType="emailAddress" autoComplete="email" />
+            <Field label="Password" value={password} onChangeText={setPassword} secureTextEntry textContentType="newPassword" autoComplete="password-new" />
+            <Field label="Confirm Password" value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry textContentType="newPassword" autoComplete="password-new" />
+
+            {pwMismatch ? <Text style={{ color: 'red' }}>Passwords don’t match.</Text> : null}
+            <Pressable disabled={!canSubmit} onPress={onSubmit} style={{ backgroundColor: '#111', padding: 14, borderRadius: 10, opacity: canSubmit ? 1 : 0.5 }}>
                 <Text style={{ color: '#fff', textAlign: 'center', fontWeight: '600' }}>{busy ? 'Working…' : 'Register'}</Text>
             </Pressable>
             <Link href="/(auth)/login">Have an account? Sign in</Link>

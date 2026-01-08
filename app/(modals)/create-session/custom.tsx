@@ -1,3 +1,4 @@
+import DateField from '@/components/DateField';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react'; //useEffect for console.log debugging
@@ -29,6 +30,7 @@ export default function CreateCustom() {
     const [label, setLabel] = useState('');
     const [duration, setDuration] = useState('');
     const [snippets, setSnippets] = useState<Snippet[]>([{ group: 'PRIMARY', upToSlug: '' }]);
+    const [date, setDate] = useState(() => new Date());
 
     // picker modal state
     const [pickerOpen, setPickerOpen] = useState(false);
@@ -79,6 +81,7 @@ export default function CreateCustom() {
             createCustomSession({
                 practiceType: 'CUSTOM',
                 label: label.trim() || undefined,
+                date: date.toISOString(),
                 duration: duration ? Number(duration) : undefined,
                 sequenceSnippets: snippets.filter((s) => s.upToSlug.trim().length > 0),
             }),
@@ -166,6 +169,7 @@ export default function CreateCustom() {
                 >
                     <Text>Add snippet</Text>
                 </Pressable>
+                <DateField label="Session date" value={date} onChange={setDate} />
                 <Text style={{ marginTop: 8 }}>Label (optional)</Text>
                 <TextInput value={label} onChangeText={setLabel} style={{ borderWidth: 1, borderRadius: 10, padding: 12 }} />
                 <Text>Duration minutes (optional)</Text>
@@ -189,9 +193,10 @@ export default function CreateCustom() {
                 >
                     {mut.isPending ? <ActivityIndicator /> : <Text style={{ fontWeight: '600' }}>Create</Text>}
                 </Pressable>
+                {!!mut.error && <Text style={{ color: 'tomato' }}>{String((mut.error as Error).message)}</Text>}
             </ScrollView>
 
-            {!!mut.error && <Text style={{ color: 'tomato' }}>{String((mut.error as Error).message)}</Text>}
+            {/* {!!mut.error && <Text style={{ color: 'tomato' }}>{String((mut.error as Error).message)}</Text>} */}
 
             {/* Pose Picker Modal */}
             <Modal visible={pickerOpen} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setPickerOpen(false)}>

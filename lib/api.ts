@@ -5,6 +5,7 @@ const API_BASE = process.env.EXPO_PUBLIC_API_BASE!.replace(/\/+$/, ''); // strip
 
 type UnauthorizedHandler = (info: { status: 401; path: string; message?: string }) => void;
 export type CustomGroup = 'PRIMARY' | 'INTERMEDIATE' | 'ADVANCED_A' | 'ADVANCED_B';
+type CustomDataGroup = 'SUN_SALUTATIONS' | 'STANDING' | 'PRIMARY' | 'INTERMEDIATE' | 'ADVANCED_A' | 'ADVANCED_B' | 'BACKBENDING' | 'FINISHING';
 
 export type AllowedMetric =
     | 'ease'
@@ -84,11 +85,25 @@ async function request<T>(
 
     const res = await fetch(url, { ...init, headers, credentials: 'omit' });
 
+
+
     // ✅ Parse body ONCE, for both success + error cases
     const data = await parseJson<any>(res);
 
     if (!res.ok) {
+        // ✅ Prefer Zod issues if present
+        const zodMsg =
+            Array.isArray(data?.issues) && data.issues.length
+                ? data.issues
+                    .map((i: any) => {
+                        const path = Array.isArray(i.path) ? i.path.join('.') : i.path;
+                        return `${path ? `${path}: ` : ''}${i.message}`;
+                    })
+                    .join('\n')
+                : null;
+
         const msg =
+            zodMsg ||
             data?.error ||
             data?.message ||
             (typeof data?.raw === 'string' ? data.raw : null) ||
@@ -159,6 +174,7 @@ export async function createPresetSession(body: {
     practiceType: Exclude<PracticeType, 'CUSTOM'>;
     label?: string;
     duration?: number;
+    date?: string; // ISO
     // omit date for now (server defaults); you can add later as ISO string
 }) {
     return api.post<{ session: CreatedSessionDTO }>('session/preset', body);
@@ -168,6 +184,7 @@ export async function createCustomSession(body: {
     practiceType: 'CUSTOM';
     label?: string;
     duration?: number;
+    date?: string; // ISO
     sequenceSnippets: { group: CustomGroup; upToSlug: string }[];
 }) {
     return api.post<{ session: CreatedSessionDTO }>('session/custom', body);
@@ -175,6 +192,16 @@ export async function createCustomSession(body: {
 
 export async function getPickerPoses(groups: CustomGroup[]) {
 
+    const result = await api.get<{ count: number; poses: PoseDTO[] }>(
+        'pose/segment',
+        { segment: groups.join(',') } // e.g. PRIMARY,INTERMEDIATE,ADVANCED_A,ADVANCED_B
+    );
+    console.log('This function is running')
+    console.log(result);
+    return result;
+}
+
+export async function getDataPickerPoses(groups: CustomDataGroup[]) {
     const result = await api.get<{ count: number; poses: PoseDTO[] }>(
         'pose/segment',
         { segment: groups.join(',') } // e.g. PRIMARY,INTERMEDIATE,ADVANCED_A,ADVANCED_B
@@ -217,4 +244,8 @@ export async function getPoseTrend(
     // console.log('[getPoseTrend]', path);
 
     return api.get<PoseTrendResponseDTO>(path);
+}
+
+export async function deleteAccount(password: string) {
+    return api.post<{ ok: boolean; message?: string }>("auth/delete", { password });
 }
