@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Alert } from 'react-native';
 import { login as apiLogin, setUnauthorizedHandler } from '../lib/api';
@@ -17,6 +18,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [isLoading, setLoading] = useState(true);
     const [isAuthed, setAuthed] = useState(false);
+    const qc = useQueryClient();
 
     // guards against multiple 401s triggering multiple signOuts/alerts
     const signingOutRef = useRef(false);
@@ -49,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             await clearToken();
             setAuthed(false);
+            qc.clear();
         } finally {
             signingOutRef.current = false;
         }
