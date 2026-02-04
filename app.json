@@ -1,15 +1,20 @@
 {
   "expo": {
-    "name": "ashtanga-mobile",
-    "slug": "ashtanga-mobile",
+    "name": "MysoreLog",
+    "slug": "mysore-log",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "ashtangamobile",
+    "scheme": "mysorelog",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "mysore-log-beta",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -44,6 +49,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "29d46ece-5bc4-4b4c-9523-dd26ce3634c3"
+      }
     }
   }
 }
