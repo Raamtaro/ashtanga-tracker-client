@@ -107,14 +107,6 @@ export default function CreateCustom() {
 
     const canCreate = snippets.every((s) => s.upToSlug.trim().length > 0);
 
-    // useEffect(() => {
-    //     console.log('Pose picker query status:', status);
-    //     if (error) {
-    //         console.log('Error fetching poses:', error);
-    //     }
-    //     console.log('Current data:', data);
-    // }, [data, error, status])
-
     return (
         <View style={{ flex: 1, padding: 16, gap: 14 }}>
             <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 48, gap: 12 }}
