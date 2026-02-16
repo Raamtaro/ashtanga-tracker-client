@@ -2,7 +2,8 @@ import DateField from '@/components/DateField';
 import { useMutation } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, Text, TextInput, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 import { createPresetSession } from '@/lib/api';
 import type { PracticeType } from '@/types/sessions';
@@ -32,25 +33,29 @@ export default function CreatePreset() {
         onSuccess: async (resp) => {
             const id = resp.session.id;
 
-            // close the create-session modal stack completely
             router.dismissAll();
 
-            // wait a tick so the dismissal finishes, then go to the tab screen
             requestAnimationFrame(() => {
-                router.replace('/(tabs)/sessions'); // now Sessions index is the stack root
+                router.replace('/(tabs)/sessions');
 
                 requestAnimationFrame(() => {
-                    router.push({
-                        pathname: '/(tabs)/sessions/[id]',
-                        params: { id },
-                    } as any);
+                    router.push({ pathname: '/(tabs)/sessions/[id]', params: { id } } as any);
                 });
             });
         },
     });
 
     return (
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 48, gap: 12 }}>
+        <KeyboardAwareScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ padding: 16, paddingBottom: 48, gap: 12 }}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            enableOnAndroid
+            enableAutomaticScroll
+            extraScrollHeight={Platform.OS === 'ios' ? 14 : 90}
+            keyboardOpeningTime={Platform.OS === 'ios' ? 0 : 250}
+        >
             <Text style={{ fontSize: 16, fontWeight: '600' }}>Practice Type</Text>
 
             <View style={{ gap: 8 }}>
@@ -69,7 +74,9 @@ export default function CreatePreset() {
                     </Pressable>
                 ))}
             </View>
+
             <DateField label="Session date" value={date} onChange={setDate} />
+
             <Text style={{ marginTop: 12 }}>Label (optional)</Text>
             <TextInput
                 value={label}
@@ -92,12 +99,16 @@ export default function CreatePreset() {
                 onPress={() => mut.mutate()}
                 style={{ marginTop: 18, padding: 14, borderRadius: 12, borderWidth: 1, alignItems: 'center' }}
             >
-                {mut.isPending ? <ActivityIndicator /> : <Text style={{ fontSize: 16, fontWeight: '600' }}>Create</Text>}
+                {mut.isPending ? (
+                    <ActivityIndicator />
+                ) : (
+                    <Text style={{ fontSize: 16, fontWeight: '600' }}>Create</Text>
+                )}
             </Pressable>
 
             {!!mut.error && (
                 <Text style={{ marginTop: 10, color: 'tomato' }}>{String((mut.error as Error).message)}</Text>
             )}
-        </ScrollView>
+        </KeyboardAwareScrollView>
     );
 }

@@ -1,17 +1,18 @@
 import DateField from '@/components/DateField';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react'; //useEffect for console.log debugging
+import { useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     FlatList,
     Modal,
+    Platform,
     Pressable,
-    ScrollView,
     Text,
     TextInput,
-    View
+    View,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { createCustomSession, getPickerPoses, type CustomGroup } from '@/lib/api';
@@ -37,13 +38,9 @@ export default function CreateCustom() {
     const [pickerIndex, setPickerIndex] = useState<number | null>(null);
     const [search, setSearch] = useState('');
 
-    const { data, isLoading, error, status } = useQuery({
+    const { data, isLoading } = useQuery({
         queryKey: ['poses', 'picker'],
-        queryFn: () => {
-            console.log("I am running") //this is showing...
-            return getPickerPoses(['PRIMARY', 'INTERMEDIATE', 'ADVANCED_A', 'ADVANCED_B'])
-        },
-        // retry: false, //debugging
+        queryFn: () => getPickerPoses(['PRIMARY', 'INTERMEDIATE', 'ADVANCED_A', 'ADVANCED_B']),
     });
 
     const posesByGroup = useMemo(() => {
@@ -55,7 +52,6 @@ export default function CreateCustom() {
             ADVANCED_B: [],
         };
         for (const p of all) {
-            // sequenceGroup matches these group names in your DB
             if (p.sequenceGroup in map) map[p.sequenceGroup as CustomGroup].push(p);
         }
         return map;
@@ -73,7 +69,12 @@ export default function CreateCustom() {
         const list = posesByGroup[selectedGroup] ?? [];
         const q = search.trim().toLowerCase();
         if (!q) return list;
-        return list.filter((p) => p.slug.includes(q) || p.sanskritName.toLowerCase().includes(q) || (p.englishName ?? '').toLowerCase().includes(q));
+        return list.filter(
+            (p) =>
+                p.slug.includes(q) ||
+                p.sanskritName.toLowerCase().includes(q) ||
+                (p.englishName ?? '').toLowerCase().includes(q)
+        );
     }, [posesByGroup, selectedGroup, search]);
 
     const mut = useMutation({
@@ -87,19 +88,11 @@ export default function CreateCustom() {
             }),
         onSuccess: async (resp) => {
             const id = resp.session.id;
-
-            // close the create-session modal stack completely
             router.dismissAll();
-
-            // wait a tick so the dismissal finishes, then go to the tab screen
             requestAnimationFrame(() => {
-                router.replace('/(tabs)/sessions'); // now Sessions index is the stack root
-
+                router.replace('/(tabs)/sessions');
                 requestAnimationFrame(() => {
-                    router.push({
-                        pathname: '/(tabs)/sessions/[id]',
-                        params: { id },
-                    } as any);
+                    router.push({ pathname: '/(tabs)/sessions/[id]', params: { id } } as any);
                 });
             });
         },
@@ -107,23 +100,24 @@ export default function CreateCustom() {
 
     const canCreate = snippets.every((s) => s.upToSlug.trim().length > 0);
 
-    // useEffect(() => {
-    //     console.log('Pose picker query status:', status);
-    //     if (error) {
-    //         console.log('Error fetching poses:', error);
-    //     }
-    //     console.log('Current data:', data);
-    // }, [data, error, status])
-
     return (
         <View style={{ flex: 1, padding: 16, gap: 14 }}>
-            <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 48, gap: 12 }}
+            <KeyboardAwareScrollView
+                style={{ flex: 1 }}
+                contentContainerStyle={{ padding: 16, paddingBottom: 48, gap: 12 }}
                 keyboardShouldPersistTaps="handled"
-                keyboardDismissMode="on-drag">
+                keyboardDismissMode="on-drag"
+                enableOnAndroid
+                enableAutomaticScroll
+                extraScrollHeight={Platform.OS === 'ios' ? 14 : 90}
+                keyboardOpeningTime={Platform.OS === 'ios' ? 0 : 250}
+            >
                 <Text style={{ fontSize: 16, fontWeight: '600' }}>Sequence snippets</Text>
+
                 {snippets.map((s, idx) => (
                     <View key={idx} style={{ borderWidth: 1, borderRadius: 12, padding: 12, gap: 10 }}>
                         <Text style={{ fontWeight: '600' }}>Snippet {idx + 1}</Text>
+
                         <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
                             {GROUPS.map((g) => (
                                 <Pressable
@@ -145,14 +139,13 @@ export default function CreateCustom() {
                                 </Pressable>
                             ))}
                         </View>
-                        <Pressable
-                            onPress={() => openPicker(idx)}
-                            style={{ padding: 12, borderRadius: 10, borderWidth: 1 }}
-                        >
+
+                        <Pressable onPress={() => openPicker(idx)} style={{ padding: 12, borderRadius: 10, borderWidth: 1 }}>
                             <Text style={{ opacity: s.upToSlug ? 1 : 0.6 }}>
                                 {s.upToSlug ? `Up to: ${s.upToSlug}` : 'Pick “up to” pose'}
                             </Text>
                         </Pressable>
+
                         {snippets.length > 1 && (
                             <Pressable
                                 onPress={() => setSnippets(snippets.filter((_, i) => i !== idx))}
@@ -163,15 +156,19 @@ export default function CreateCustom() {
                         )}
                     </View>
                 ))}
+
                 <Pressable
                     onPress={() => setSnippets([...snippets, { group: 'PRIMARY', upToSlug: '' }])}
                     style={{ padding: 12, borderRadius: 12, borderWidth: 1, alignItems: 'center' }}
                 >
                     <Text>Add snippet</Text>
                 </Pressable>
+
                 <DateField label="Session date" value={date} onChange={setDate} />
+
                 <Text style={{ marginTop: 8 }}>Label (optional)</Text>
                 <TextInput value={label} onChangeText={setLabel} style={{ borderWidth: 1, borderRadius: 10, padding: 12 }} />
+
                 <Text>Duration minutes (optional)</Text>
                 <TextInput
                     value={duration}
@@ -179,6 +176,7 @@ export default function CreateCustom() {
                     keyboardType="numeric"
                     style={{ borderWidth: 1, borderRadius: 10, padding: 12 }}
                 />
+
                 <Pressable
                     disabled={!canCreate || mut.isPending}
                     onPress={() => mut.mutate()}
@@ -193,13 +191,17 @@ export default function CreateCustom() {
                 >
                     {mut.isPending ? <ActivityIndicator /> : <Text style={{ fontWeight: '600' }}>Create</Text>}
                 </Pressable>
-                {!!mut.error && <Text style={{ color: 'tomato' }}>{String((mut.error as Error).message)}</Text>}
-            </ScrollView>
 
-            {/* {!!mut.error && <Text style={{ color: 'tomato' }}>{String((mut.error as Error).message)}</Text>} */}
+                {!!mut.error && <Text style={{ color: 'tomato' }}>{String((mut.error as Error).message)}</Text>}
+            </KeyboardAwareScrollView>
 
             {/* Pose Picker Modal */}
-            <Modal visible={pickerOpen} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setPickerOpen(false)}>
+            <Modal
+                visible={pickerOpen}
+                animationType="slide"
+                presentationStyle="pageSheet"
+                onRequestClose={() => setPickerOpen(false)}
+            >
                 <SafeAreaView style={{ flex: 1 }}>
                     <View style={{ flex: 1, padding: 16, gap: 12 }}>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -210,12 +212,14 @@ export default function CreateCustom() {
                                 <Text style={{ fontSize: 16 }}>Done</Text>
                             </Pressable>
                         </View>
+
                         <TextInput
                             value={search}
                             onChangeText={setSearch}
                             placeholder="Search slug / sanskrit / english"
                             style={{ borderWidth: 1, borderRadius: 10, padding: 12 }}
                         />
+
                         {isLoading ? (
                             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                                 <ActivityIndicator />
@@ -224,6 +228,7 @@ export default function CreateCustom() {
                             <FlatList
                                 data={pickerList}
                                 keyExtractor={(p) => p.slug}
+                                keyboardShouldPersistTaps="handled"
                                 renderItem={({ item }) => (
                                     <Pressable
                                         onPress={() => {
@@ -237,7 +242,8 @@ export default function CreateCustom() {
                                     >
                                         <Text style={{ fontWeight: '600' }}>{item.slug}</Text>
                                         <Text style={{ opacity: 0.7 }}>
-                                            {item.sanskritName}{item.englishName ? ` — ${item.englishName}` : ''}
+                                            {item.sanskritName}
+                                            {item.englishName ? ` — ${item.englishName}` : ''}
                                         </Text>
                                     </Pressable>
                                 )}
